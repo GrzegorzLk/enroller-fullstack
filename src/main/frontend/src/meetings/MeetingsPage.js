@@ -5,6 +5,7 @@ import MeetingsList from "./MeetingsList";
 export default function MeetingsPage({username}) {
     const [meetings, setMeetings] = useState([]);
     const [addingNewMeeting, setAddingNewMeeting] = useState(false);
+    const [refreshMeetings, setResfeshMeetings] = useState(false);
 
     useEffect(() => {
         const fetchMeetings = async () => {
@@ -15,7 +16,7 @@ export default function MeetingsPage({username}) {
             }
         };
         fetchMeetings();
-    }, []);
+    }, [refreshMeetings]);
 
     async function handleNewMeeting(meeting) {
         const response = await fetch('/api/meetings', {
@@ -24,16 +25,27 @@ export default function MeetingsPage({username}) {
             headers: {'Content-Type': 'application/json'}
         });
         if (response.ok) {
-            const nextMeetings = [...meetings, meeting];
+            const nextMeetings = [...meetings, await response.json()];
             setMeetings(nextMeetings);
             setAddingNewMeeting(false);
+        } else {
+            alert("Status: " + response.status);
+            setResfeshMeetings(!refreshMeetings);
         }
-
     }
 
-    function handleDeleteMeeting(meeting) {
-        const nextMeetings = meetings.filter(m => m !== meeting);
-        setMeetings(nextMeetings);
+    async function handleDeleteMeeting(meeting) {
+        const response = await fetch("/api/meetings/" + meeting.id, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            const nextMeetings = meetings.filter(m => m !== meeting);
+            setMeetings(nextMeetings);
+        } else {
+            alert("Status: " + response.status);
+            setResfeshMeetings(!refreshMeetings);
+        }
+
     }
 
     function handleSignIn(meeting) {
